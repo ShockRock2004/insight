@@ -4,17 +4,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 class JournalApp {
     constructor() {
-        // --- 1. CORE STORAGE SETUP ---
+        // --- 1. CORE STORAGE SETUP (SINGLE SOURCE OF TRUTH) ---
         this.STORAGE_KEY = "journal_entries";
         
-        // Load data immediately
+        // Load data ONCE on startup
+        // Fallback to empty array if nothing exists
         const stored = localStorage.getItem(this.STORAGE_KEY);
         this.entries = stored ? JSON.parse(stored) : [];
         
+        // State for navigation
         this.viewState = { type: 'home', year: null, month: null };
         this.currentEditingDate = null;
         
-        // Gemini Config (Preserved)
+        // Backend Config
         this.backendUrl = "http://localhost:3000/analyze";
 
         this.init();
@@ -23,13 +25,13 @@ class JournalApp {
     init() {
         this.cacheDOM();
         this.bindEvents();
-        this.render();
+        // Initial Render - Hydrates UI from localStorage data
+        this.render(); 
     }
 
-    // --- 2. DATA PERSISTENCE HELPER ---
+    // --- 2. STORAGE HELPER ---
     saveToStorage() {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.entries));
-        console.log("Journal Saved."); // Debug confirmation
     }
 
     cacheDOM() {
@@ -68,7 +70,7 @@ class JournalApp {
     }
 
     bindEvents() {
-        // Date Picker
+        // Date Picker (Hidden Input)
         if (this.dom.hero.card && this.dom.hero.picker) {
             this.dom.hero.card.addEventListener('click', (e) => {
                 if (e.target === this.dom.hero.picker) return;
@@ -87,7 +89,7 @@ class JournalApp {
             });
         }
 
-        // Navigation
+        // Navigation Back Button
         if (this.dom.backBtn) {
             this.dom.backBtn.addEventListener('click', () => this.navigateBack());
         }
@@ -97,8 +99,8 @@ class JournalApp {
         this.dom.editor.saveBtn.addEventListener('click', () => this.saveEntry());
         this.dom.editor.deleteBtn.addEventListener('click', () => this.deleteCurrentEntry());
 
-        // --- AUTOSAVE IMPLEMENTATION ---
-        // Save whenever the user types
+        // --- AUTOSAVE (MANDATORY) ---
+        // Updates state immediately on typing
         this.dom.editor.textarea.addEventListener('input', () => {
             if(this.currentEditingDate) {
                 this.updateEntryData(this.currentEditingDate, this.dom.editor.textarea.value);
@@ -110,6 +112,7 @@ class JournalApp {
         this.dom.ai.closeBtn.addEventListener('click', () => this.dom.ai.modal.classList.remove('open'));
     }
 
+    // --- 3. DATA ACCESS HELPERS ---
     getEntry(date) {
         return this.entries.find(e => e.date === date);
     }
@@ -119,6 +122,7 @@ class JournalApp {
         return date.toLocaleString('default', { month: 'long' });
     }
 
+    // --- 4. NAVIGATION LOGIC (RESTORATION) ---
     navigateBack() {
         if (this.viewState.type === 'days') {
             this.setView('months', this.viewState.year);
@@ -130,13 +134,17 @@ class JournalApp {
     setView(type, year = null, month = null) {
         this.viewState = { type, year, month };
         
+        // Hide all views first
         Object.values(this.dom.views).forEach(el => el.classList.remove('active'));
+        
+        // Show Back Button everywhere except Home
         this.dom.backBtn.style.display = type === 'home' ? 'none' : 'flex';
 
+        // Render the requested view based on Current State
         if (type === 'home') {
             this.dom.headerTitle.innerText = "Journal App";
             this.dom.views.home.classList.add('active');
-            this.renderYears();
+            this.renderYears(); 
         } 
         else if (type === 'months') {
             this.dom.headerTitle.innerText = `${year} Archives`;
@@ -150,29 +158,45 @@ class JournalApp {
         }
     }
 
-    // --- Rendering ---
+    render() {
+        this.setView('home');
+    }
+
+    // --- 5. VIEW RENDERING (READS FROM STORAGE STATE) ---
+    
     renderYears() {
         this.dom.grids.years.innerHTML = '';
-        const years = [...new Set(this.entries.map(e => e.date.split('-')[0]))].sort((a,b) => b-a);
         
-        years.forEach(year => {
+        // Calculate Years dynamically from loaded entries
+        const uniqueYears = [...new Set(this.entries.map(e => e.date.split('-')[0]))].sort((a,b) => b-a);
+        
+        if (uniqueYears.length === 0) {
+            this.dom.grids.years.innerHTML = '<div style="opacity:0.5; padding:1rem;">No archives yet. Start writing!</div>';
+        }
+
+        uniqueYears.forEach(year => {
             const card = document.createElement('div');
             card.className = 'item-card';
+            // Count entries for this year
+            const count = this.entries.filter(e => e.date.startsWith(year)).length;
+            
             card.innerHTML = `
                 <div class="card-title">${year}</div>
-                <div class="card-sub">${this.entries.filter(e => e.date.startsWith(year)).length} Entries</div>
+                <div class="card-sub">${count} Entries</div>
                 <button class="card-delete"><i class="fa-solid fa-trash"></i></button>
             `;
             
+            // Navigate to Months
             card.addEventListener('click', (e) => {
                 if(!e.target.closest('.card-delete')) this.setView('months', year);
             });
 
+            // Delete logic
             card.querySelector('.card-delete').addEventListener('click', (e) => {
                 e.stopPropagation();
                 if(confirm(`Delete all entries from ${year}?`)) {
                     this.entries = this.entries.filter(ent => !ent.date.startsWith(year));
-                    this.saveToStorage(); // PERSIST DELETE
+                    this.saveToStorage();
                     this.renderYears();
                 }
             });
@@ -183,10 +207,14 @@ class JournalApp {
 
     renderMonths(year) {
         this.dom.grids.months.innerHTML = '';
+        
+        // Filter entries for this year
         const entriesInYear = this.entries.filter(e => e.date.startsWith(year));
-        const months = [...new Set(entriesInYear.map(e => parseInt(e.date.split('-')[1]) - 1))].sort((a,b) => a-b);
+        
+        // Calculate Months dynamically
+        const uniqueMonths = [...new Set(entriesInYear.map(e => parseInt(e.date.split('-')[1]) - 1))].sort((a,b) => a-b);
 
-        months.forEach(monthIdx => {
+        uniqueMonths.forEach(monthIdx => {
             const card = document.createElement('div');
             card.className = 'item-card month-card';
             const count = entriesInYear.filter(e => parseInt(e.date.split('-')[1]) - 1 === monthIdx).length;
@@ -197,6 +225,7 @@ class JournalApp {
                 <button class="card-delete"><i class="fa-solid fa-trash"></i></button>
             `;
 
+            // Navigate to Days
             card.addEventListener('click', (e) => {
                 if(!e.target.closest('.card-delete')) this.setView('days', year, monthIdx);
             });
@@ -206,7 +235,7 @@ class JournalApp {
                 if(confirm(`Delete ${this.getMonthName(monthIdx)} ${year}?`)) {
                     const prefix = `${year}-${String(monthIdx+1).padStart(2,'0')}`;
                     this.entries = this.entries.filter(ent => !ent.date.startsWith(prefix));
-                    this.saveToStorage(); // PERSIST DELETE
+                    this.saveToStorage();
                     this.renderMonths(year);
                 }
             });
@@ -217,7 +246,10 @@ class JournalApp {
 
     renderDays(year, month) {
         this.dom.grids.days.innerHTML = '';
+        
+        // Format month correctly (0 -> 01)
         const prefix = `${year}-${String(month+1).padStart(2,'0')}`;
+        // Filter specific days
         const days = this.entries.filter(e => e.date.startsWith(prefix)).sort((a,b) => b.date.localeCompare(a.date));
 
         days.forEach(entry => {
@@ -231,6 +263,7 @@ class JournalApp {
                 <div class="day-preview">${entry.content}</div>
             `;
 
+            // Open Editor
             card.addEventListener('click', (e) => {
                 if(!e.target.closest('.card-delete')) this.openEditor(entry.date);
             });
@@ -239,7 +272,7 @@ class JournalApp {
                 e.stopPropagation();
                 if(confirm('Delete this entry?')) {
                     this.entries = this.entries.filter(e => e.date !== entry.date);
-                    this.saveToStorage(); // PERSIST DELETE
+                    this.saveToStorage();
                     this.renderDays(year, month);
                 }
             });
@@ -248,32 +281,21 @@ class JournalApp {
         });
     }
 
-    // --- Editor Logic ---
+    // --- 6. EDITOR LOGIC (HYDRATION) ---
     openEditor(date) {
         this.currentEditingDate = date;
+        
+        // Hydrate from State
         const entry = this.getEntry(date);
         
         this.dom.editor.dateDisplay.innerText = date;
+        // If entry exists, show text. If not, show empty.
         this.dom.editor.textarea.value = entry ? entry.content : '';
+        
         this.dom.editor.modal.classList.add('open');
         this.dom.editor.textarea.focus();
     }
 
-    closeEditor() {
-        // Final save on close to be safe
-        if(this.currentEditingDate && this.dom.editor.textarea.value.trim() !== "") {
-            this.updateEntryData(this.currentEditingDate, this.dom.editor.textarea.value);
-        }
-        this.dom.editor.modal.classList.remove('open');
-        this.currentEditingDate = null;
-        
-        // Refresh Current View
-        if(this.viewState.type === 'home') this.renderYears();
-        else if(this.viewState.type === 'months') this.renderMonths(this.viewState.year);
-        else if(this.viewState.type === 'days') this.renderDays(this.viewState.year, this.viewState.month);
-    }
-
-    // Helper to update state and storage without closing modal
     updateEntryData(date, content) {
         const existingIdx = this.entries.findIndex(e => e.date === date);
         if(existingIdx > -1) {
@@ -281,10 +303,20 @@ class JournalApp {
         } else {
             this.entries.push({ date: date, content: content, id: Date.now() });
         }
+        // Save to LS immediately
         this.saveToStorage();
     }
 
-    // Button click handler
+    closeEditor() {
+        this.dom.editor.modal.classList.remove('open');
+        this.currentEditingDate = null;
+        
+        // Force Re-render of current view to show changes immediately
+        if(this.viewState.type === 'home') this.renderYears();
+        else if(this.viewState.type === 'months') this.renderMonths(this.viewState.year);
+        else if(this.viewState.type === 'days') this.renderDays(this.viewState.year, this.viewState.month);
+    }
+
     saveEntry() {
         const content = this.dom.editor.textarea.value.trim();
         if(content) {
@@ -298,11 +330,13 @@ class JournalApp {
             this.entries = this.entries.filter(e => e.date !== this.currentEditingDate);
             this.saveToStorage();
             this.dom.editor.modal.classList.remove('open');
-            this.render(); 
+            // Refresh view
+            if(this.viewState.type === 'days') this.renderDays(this.viewState.year, this.viewState.month);
+            else this.renderYears();
         }
     }
 
-    // --- AI Integration ---
+    // --- 7. AI INTEGRATION ---
     async triggerAI() {
         this.dom.ai.modal.classList.add('open');
         this.dom.ai.content.innerHTML = `
