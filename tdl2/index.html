@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>To-Do List</title>
+
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="todo-app">
+               <div class="header-section">
+                   <h1>To-Do List</h1>
+                   <div class="stat-container">
+                        <div class="details">
+                            <span class="stat-label">Progress</span>
+                            <div id="progressbar">
+                                <div id="progress"></div>
+                            </div>
+                        </div>
+                        <div class="stat-number">
+                            <p id="numbers">0/0</p>
+                        </div>
+                   </div>
+               </div>
+
+               <form class="input-area">
+                    <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
+                    <button type="submit" id="add-task-btn">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+               </form>
+
+                <div class="todos-container">
+                    <ul id="task-list">
+                        <div class="empty-state" id="empty-state">
+                            <img src="Media/Images/EmptyState.png" alt="No tasks" onerror="this.style.display='none'">
+                            <p>No tasks yet. Stay focused.</p>
+                        </div>
+                        </ul>
+                </div>
+            </div>
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+    </body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Plan: Jan - May</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- 1. Reset & Global Variables --- */
+        :root {
+            --bg-dark: #0B132B;
+            --bg-mid: #1C2541;
+            --bg-light: #3A506B;
+            --text-main: #ffffff;
+            --text-muted: #aab2bd;
+            
+            /* Monthly Gradients */
+            --grad-jan: linear-gradient(135deg, #102A43, #4DD0E1);
+            --grad-feb: linear-gradient(135deg, #2E1A47, #7F7FD5);
+            --grad-mar: linear-gradient(135deg, #11998E, #38EF7D);
+            --grad-apr: linear-gradient(135deg, #56AB2F, #A8E063);
+            --grad-may: linear-gradient(135deg, #FF8008, #FFC837);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            background: linear-gradient(to bottom, var(--bg-dark), var(--bg-mid), var(--bg-light));
+            background-attachment: fixed; /* Ensures background stays deep and continuous */
+            overflow: hidden; /* Main scroll handles by container */
+        }
+
+        /* --- 2. Scroll Snap Structure --- */
+        .main-container {
+            height: 100vh;
+            width: 100vw;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        section.month-card {
+            height: 100vh;
+            width: 100vw;
+            scroll-snap-align: start;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            /* Subtle noise texture overlay */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        }
+
+        /* --- 3. Month Header & Daily Banner --- */
+        .header-group {
+            position: absolute;
+            top: 5%;
+            left: 5%;
+            z-index: 10;
+        }
+
+        .month-title {
+            font-size: 4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.8s ease;
+        }
+
+        .month-subtitle {
+            font-size: 1.2rem;
+            font-weight: 300;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .daily-banner {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .daily-banner i { color: #FFD700; }
+
+        /* --- 4. Horizontal Timeline Layout --- */
+        .timeline-wrapper {
+            width: 90%;
+            height: 60%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* The Horizontal Line */
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 0%; /* Animates to 100% */
+            height: 4px;
+            border-radius: 2px;
+            z-index: 1;
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.5s;
+        }
+
+        /* Week Nodes Container */
+        .week-node {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        /* Alternate positioning: Odd weeks up, Even weeks down */
+        .week-node:nth-child(odd) { flex-direction: column-reverse; }
+        .week-node:nth-child(even) { flex-direction: column; }
+
+        /* The Connector Stem */
+        .node-stem {
+            height: 60px;
+            width: 2px;
+            background: rgba(255,255,255,0.2);
+            transition: height 0.5s ease;
+        }
+
+        /* The Dot on the line */
+        .node-point {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 3px solid #fff; /* Border color gets overridden by JS */
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* The Content Box */
+        .node-content {
+            background: rgba(11, 19, 43, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 1.2rem;
+            border-radius: 12px;
+            width: 220px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 10px 0;
+        }
+
+        .node-content:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .week-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .week-topics {
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-top: 5px;
+        }
+
+        /* --- 5. Theme Classes (Applied to line and icons) --- */
+        /* January */
+        .theme-jan .timeline-line { background: var(--grad-jan); }
+        .theme-jan .node-icon { background: var(--grad-jan); }
+        .theme-jan .node-point { border-color: #2C5364; }
+        
+        /* February */
+        .theme-feb .timeline-line { background: var(--grad-feb); }
+        .theme-feb .node-icon { background: var(--grad-feb); }
+        .theme-feb .node-point { border-color: #7F7FD5; }
+
+        /* March */
+        .theme-mar .timeline-line { background: var(--grad-mar); }
+        .theme-mar .node-icon { background: var(--grad-mar); }
+        .theme-mar .node-point { border-color: #38EF7D; }
+
+        /* April */
+        .theme-apr .timeline-line { background: var(--grad-apr); }
+        .theme-apr .node-icon { background: var(--grad-apr); }
+        .theme-apr .node-point { border-color: #A8E063; }
+
+        /* May */
+        .theme-may .timeline-line { background: var(--grad-may); }
+        .theme-may .node-icon { background: var(--grad-may); }
+        .theme-may .node-point { border-color: #FFC837; }
+
+
+        /* --- 6. Active State Animations (Triggered by JS) --- */
+        .month-card.active .month-title {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .month-card.active .timeline-line {
+            width: 100%;
+        }
+
+        .month-card.active .week-node {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Staggered animation for weeks */
+        .month-card.active .week-node:nth-child(1) { transition-delay: 0.6s; }
+        .month-card.active .week-node:nth-child(2) { transition-delay: 0.8s; }
+        .month-card.active .week-node:nth-child(3) { transition-delay: 1.0s; }
+        .month-card.active .week-node:nth-child(4) { transition-delay: 1.2s; }
+
+
+        /* --- 7. Responsive Design (Mobile) --- */
+        @media (max-width: 768px) {
+            .header-group {
+                top: 2%;
+                left: 2rem;
+                position: relative;
+                margin-bottom: 2rem;
+            }
+            
+            .month-title { font-size: 2.5rem; }
+            
+            .timeline-wrapper {
+                flex-direction: column;
+                height: auto;
+                width: 100%;
+                padding-left: 2rem; /* Indent for vertical line */
+                border-left: 4px solid #333; /* Fallback line */
+            }
+
+            /* Hide horizontal line on mobile, use border-left instead */
+            .timeline-line {
+                width: 4px !important; 
+                height: 0%; 
+                top: 0; 
+                left: 2rem; 
+                transition: height 1.5s ease;
+            }
+            .month-card.active .timeline-line { height: 100%; }
+
+            .week-node {
+                flex-direction: row !important; /* Force row layout */
+                align-items: center;
+                margin-bottom: 1.5rem;
+                width: 100%;
+                transform: translateX(20px);
+            }
+            
+            .node-stem {
+                width: 30px;
+                height: 2px;
+                background: rgba(255,255,255,0.2);
+            }
+
+            .node-point { margin: 0; }
+
+            .node-content {
+                width: 100%;
+                margin-left: 10px;
+                text-align: left;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .week-topics { font-size: 0.85rem; margin-bottom: 0;}
+            .node-icon { width: 30px; height: 30px; font-size: 1rem; flex-shrink: 0; margin-left: 10px; margin-top: 0;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+
+        <section class="month-card theme-jan" id="jan">
+            <div class="header-group">
+                <span class="month-subtitle">🌐Web Development</span>
+                <h1 class="month-title">January</h1>
+                <div class="daily-banner">
+                    <i class="fas fa-fire"></i>
+                    <span>5 DSA Questions + 3 Quant Questions + 3 Pages CLRS</span>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 1</span>
+                        <div class="week-topics">Complete React<br>2 React Projects</div>
+                        <div class="node-icon"><i class="fab fa-react"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 2</span>
+                        <div class="week-topics">Complete Node.js<br>2 Node Projects</div>
+                        <div class="node-icon"><i class="fab fa-node-js"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 3</span>
+                        <div class="week-topics">Web Scraping<br>Practice</div>
+                        <div class="node-icon"><i class="fas fa-spider"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 4</span>
+                        <div class="week-topics">PostgreSQL<br>2 SQL Projects</div>
+                        <div class="node-icon"><i class="fas fa-database"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="month-card theme-feb" id="feb">
+            <div class="header-group">
+                <span class="month-subtitle">🖥️ML + 📐Math</span>
+                <h1 class="month-title">February</h1>
+                <div class="daily-banner">
+                    <i class="fas fa-fire"></i>
+                    <span>5 DSA Questions + 3 Quant Questions + 3 Pages CLRS</span>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 1</span>
+                        <div class="week-topics">2 Web Dev Projects<br>Scraping Projects</div>
+                        <div class="node-icon"><i class="fas fa-code"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 2</span>
+                        <div class="week-topics">Vector Calculus<br>End-to-End ML<br>Classification</div>
+                        <div class="node-icon"><i class="fas fa-brain"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 3</span>
+                        <div class="week-topics">Probability<br>Distributions<br>Training Models</div>
+                        <div class="node-icon"><i class="fas fa-chart-bar"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 4</span>
+                        <div class="week-topics">Focus on<br>QUIZ-I</div>
+                        <div class="node-icon"><i class="fas fa-file-contract"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="month-card theme-mar" id="mar">
+            <div class="header-group">
+                <span class="month-subtitle">⛏️Web Scraping</span>
+                <h1 class="month-title">March</h1>
+                <div class="daily-banner">
+                    <i class="fas fa-fire"></i>
+                    <span>5 DSA Questions + 3 Quant Questions + 3 Pages CLRS</span>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 1</span>
+                        <div class="week-topics">Web Dev Project<br>Web Scraping</div>
+                        <div class="node-icon"><i class="fas fa-laptop-code"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 2</span>
+                        <div class="week-topics">Start Upwork<br>SVM<br>Optimization</div>
+                        <div class="node-icon"><i class="fas fa-briefcase"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 3</span>
+                        <div class="week-topics">Decision Trees<br>Linear Regression</div>
+                        <div class="node-icon"><i class="fas fa-tree"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 4</span>
+                        <div class="week-topics">Focus on<br>QUIZ-II</div>
+                        <div class="node-icon"><i class="fas fa-pen-nib"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="month-card theme-apr" id="apr">
+            <div class="header-group">
+                <span class="month-subtitle">💵Work</span>
+                <h1 class="month-title">April</h1>
+                <div class="daily-banner">
+                    <i class="fas fa-fire"></i>
+                    <span>5 DSA Questions + 3 Quant Questions + 3 Pages CLRS</span>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 1</span>
+                        <div class="week-topics">Web Projects<br>Upwork Work</div>
+                        <div class="node-icon"><i class="fas fa-dollar-sign"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 2</span>
+                        <div class="week-topics">Ensemble Learning<br>Random Forests<br>PCA</div>
+                        <div class="node-icon"><i class="fas fa-cubes"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 3</span>
+                        <div class="week-topics">Dim. Reduction<br>GMM<br>SVM Classif.</div>
+                        <div class="node-icon"><i class="fas fa-project-diagram"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 4</span>
+                        <div class="week-topics">Unsupervised Learn<br>Web Scraping</div>
+                        <div class="node-icon"><i class="fas fa-network-wired"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="month-card theme-may" id="may">
+            <div class="header-group">
+                <span class="month-subtitle">📚Endsem</span>
+                <h1 class="month-title">May</h1>
+                <div class="daily-banner">
+                    <i class="fas fa-fire"></i>
+                    <span>5 DSA Questions + 3 Quant Questions + 3 Pages CLRS</span>
+                </div>
+            </div>
+
+            <div class="timeline-wrapper">
+                <div class="timeline-line"></div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 1</span>
+                        <div class="week-topics">Study for<br>ENDSEM</div>
+                        <div class="node-icon"><i class="fas fa-book-open"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 2</span>
+                        <div class="week-topics">Study for<br>ENDSEM</div>
+                        <div class="node-icon"><i class="fas fa-book-open"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 3</span>
+                        <div class="week-topics">Study for<br>ENDSEM</div>
+                        <div class="node-icon"><i class="fas fa-graduation-cap"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+
+                <div class="week-node">
+                    <div class="node-content">
+                        <span class="week-label">Week 4</span>
+                        <div class="week-topics">Home<br>Bigger Upwork Gigs</div>
+                        <div class="node-icon"><i class="fas fa-home"></i></div>
+                    </div>
+                    <div class="node-stem"></div>
+                    <div class="node-point"></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Intersection Observer to trigger animations when months slide into view
+        const options = {
+            root: document.querySelector('.main-container'),
+            threshold: 0.5 // Trigger when 50% of the card is visible
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                } else {
+                    // Optional: remove 'active' if you want it to re-animate when scrolling back
+                    // entry.target.classList.remove('active');
+                }
+            });
+        }, options);
+
+        const cards = document.querySelectorAll('.month-card');
+        cards.forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

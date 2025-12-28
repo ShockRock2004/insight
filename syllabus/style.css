@@ -1,0 +1,225 @@
+/* --- 1. Variables & Reset --- */
+:root {
+    /* Ecosystem Colors */
+    --bg-dark: #0B132B;
+    --bg-mid: #1C2541;
+    --text-main: #ffffff;
+    --text-muted: #aab2bd;
+
+    /* Accents */
+    --accent-cyan: #38ADA9;
+    --accent-blue: #0A3D62;
+    --accent-indigo: #7F7FD5;
+    
+    /* Glass Effect */
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(16px);
+    --card-radius: 20px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: linear-gradient(180deg, var(--bg-dark), var(--bg-mid));
+    min-height: 100vh;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    overflow-x: hidden;
+}
+
+/* Texture Overlay (Matches Journal App) */
+.background-noise {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+    pointer-events: none;
+}
+
+/* --- 2. Layout --- */
+.app-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeIn 0.8s ease-out;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #fff, #aab2bd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.page-header p {
+    color: var(--accent-cyan);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+/* --- 3. Grid System --- */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Desktop: 3 Columns */
+    gap: 2rem;
+    width: 100%;
+    animation: slideUp 0.6s ease-out forwards;
+}
+
+/* --- 4. Card Styling --- */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--card-radius);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.icon-accent {
+    font-size: 1.2rem;
+}
+
+/* Section Specific Accents */
+.section-hobby .icon-accent { color: #e17055; }
+.section-academic .icon-accent { color: var(--accent-cyan); }
+.section-practice .icon-accent { color: var(--accent-indigo); }
+
+/* --- 5. Links & Buttons --- */
+.links-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.resource-btn, .static-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Static items (no link) styling */
+.static-item {
+    cursor: default;
+    opacity: 0.7;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.resource-btn i, .static-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+/* Hover Effects (MANDATORY) */
+.resource-btn:hover {
+    background: rgba(56, 173, 169, 0.1); /* Icy Cyan Tint */
+    border-color: var(--accent-cyan);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(56, 173, 169, 0.2);
+}
+
+.resource-btn:hover i {
+    color: var(--accent-cyan);
+    opacity: 1;
+}
+
+/* Focus State for Accessibility */
+.resource-btn:focus {
+    outline: none;
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 0 3px rgba(56, 173, 169, 0.3);
+}
+
+/* --- 6. Responsive Design --- */
+@media (max-width: 1024px) {
+    .grid-container {
+        grid-template-columns: repeat(2, 1fr); /* Tablet: 2 cols */
+    }
+    .section-practice {
+        grid-column: span 2; /* Practice takes full width on tablet */
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: 1fr; /* Mobile: Stacked */
+    }
+    .section-practice {
+        grid-column: span 1;
+    }
+    .app-wrapper {
+        padding: 1rem;
+    }
+}
+
+/* --- 7. Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}

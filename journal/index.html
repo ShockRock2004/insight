@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Deep Focus Journal</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="background-noise"></div>
+
+<div class="app-wrapper">
+    <div class="app-container">
+
+        <div class="header">
+            <button class="nav-btn back-btn" id="backButton" style="display: none;">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="header-title" id="headerTitle">Journal App</h1>
+            <div class="header-spacer"></div>
+        </div>
+
+        <div class="content-area" id="contentArea">
+            <div id="homeView" class="view-section active">
+                <div class="hero-card" id="newEntryCard">
+                    <div class="hero-content">
+                        <div class="hero-icon"><i class="fa-solid fa-plus"></i></div>
+                        <h2>New Journal Entry</h2>
+                        <p>Capture your thoughts for today</p>
+                    </div>
+                    <input type="date" id="heroDatePicker" style="visibility: hidden; position: absolute; pointer-events: none;">
+                </div>
+
+                <div class="section-title">Archives</div>
+                <div class="cards-grid" id="yearsGrid"></div>
+            </div>
+
+            <div id="monthsView" class="view-section">
+                <div class="cards-grid" id="monthsGrid"></div>
+            </div>
+
+            <div id="daysView" class="view-section">
+                <div class="cards-list" id="daysList"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal" id="entryModal">
+    <div class="modal-glass">
+        <div class="modal-header">
+            <h2 id="editorDateDisplay">...</h2>
+            <button class="close-btn" id="closeEditorBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <textarea id="entryContent" placeholder="Start writing... (Autosaves on exit)"></textarea>
+        <div class="modal-footer">
+            <button class="action-btn delete-btn" id="deleteEntryBtn">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+            <button class="action-btn save-btn" id="saveEntryBtn">
+                <i class="fa-solid fa-check"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="aiModal">
+    <div class="modal-glass ai-glass">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-wand-magic-sparkles"></i> AI Insights</h2>
+            <button class="close-btn" id="closeAiBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="ai-content-scroll" id="aiResultContent">
+            </div>
+    </div>
+</div>
+
+<button class="ai-float-btn" id="aiTriggerBtn">
+    <i class="fa-solid fa-wand-magic-sparkles"></i>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

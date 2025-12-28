@@ -1,0 +1,104 @@
+/* --- 1. Variables & Reset --- */
+:root {
+    --bg-dark: #0B132B;
+    --bg-mid: #1C2541;
+    --text-main: #ffffff;
+    --text-muted: #aab2bd;
+
+    --accent-cyan: linear-gradient(135deg, #0A3D62, #38ADA9);
+    --accent-warm: linear-gradient(135deg, #FF8008, #FFC837);
+    
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(16px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+body { background: linear-gradient(180deg, var(--bg-dark), var(--bg-mid)); height: 100vh; color: var(--text-main); overflow: hidden; }
+
+/* Texture */
+.background-noise { position: fixed; inset: 0; z-index: -1; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E"); pointer-events: none; }
+
+/* --- 2. Layout --- */
+.app-wrapper { display: flex; justify-content: center; height: 100%; padding: 1rem; }
+.app-container { width: 100%; max-width: 600px; height: 100%; display: flex; flex-direction: column; position: relative; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; margin-bottom: 1rem; }
+.header-title { font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; background: var(--accent-cyan); background-clip: text; -webkit-background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+.nav-btn { background: none; border: none; color: var(--text-main); font-size: 1.2rem; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+.nav-btn:hover { background: rgba(255,255,255,0.1); }
+.header-spacer { width: 40px; }
+
+/* --- 3. Content --- */
+.content-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+.content-area::-webkit-scrollbar { width: 4px; }
+.content-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+.view-section { display: none; animation: fadeIn 0.4s ease-out; }
+.view-section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Hero Card */
+.hero-card { background: var(--accent-cyan); border-radius: 24px; padding: 2rem; text-align: center; cursor: pointer; position: relative; overflow: visible; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease; margin-bottom: 2rem; z-index: 1; }
+.hero-card:hover { transform: scale(1.02); box-shadow: 0 20px 40px rgba(56, 173, 169, 0.4); }
+.hero-content { pointer-events: none; }
+.hero-icon { font-size: 2rem; margin-bottom: 1rem; background: rgba(255,255,255,0.2); width: 60px; height: 60px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.hero-card h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+.hero-card p { font-size: 0.9rem; opacity: 0.9; }
+
+/* Grids */
+.section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 1rem; padding-left: 5px; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 1rem; }
+
+.item-card { background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: var(--glass-border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; min-height: 120px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+.item-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); transform: translateY(-3px); }
+.card-title { font-size: 1.5rem; font-weight: 700; color: #fff; }
+.card-sub { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; }
+.month-card { border-top: 4px solid #7F7FD5; }
+
+/* Days List */
+.cards-list { display: flex; flex-direction: column; gap: 1rem; }
+.day-card { background: var(--glass-bg); border: var(--glass-border); backdrop-filter: var(--glass-blur); padding: 1.2rem; border-radius: 16px; cursor: pointer; transition: transform 0.2s; display: flex; flex-direction: column; gap: 0.5rem; }
+.day-card:hover { transform: translateX(5px); background: rgba(255,255,255,0.06); }
+.day-header { display: flex; justify-content: space-between; align-items: center; }
+.day-date { font-weight: 700; color: #38ADA9; }
+.day-preview { font-size: 0.9rem; color: #ccc; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Delete Btn */
+.card-delete { position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.2); color: #ff6b6b; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 0.8rem; cursor: pointer; opacity: 0; transition: opacity 0.2s; z-index: 2; }
+.item-card:hover .card-delete, .day-card:hover .card-delete { opacity: 1; }
+
+/* --- 4. Modals --- */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 100; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+.modal.open { opacity: 1; pointer-events: all; }
+.modal-glass { width: 90%; max-width: 600px; height: 80vh; background: #1C2541; border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal.open .modal-glass { transform: scale(1); }
+
+.modal-header { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { font-size: 1.1rem; color: var(--text-muted); }
+.close-btn { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+
+#entryContent { flex: 1; background: transparent; border: none; padding: 1.5rem; color: white; font-size: 1.1rem; line-height: 1.6; resize: none; outline: none; }
+
+.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; }
+.action-btn { padding: 10px 20px; border-radius: 30px; border: none; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: transform 0.2s; }
+.action-btn:active { transform: scale(0.95); }
+.save-btn { background: var(--accent-cyan); color: white; }
+.delete-btn { background: rgba(255,255,255,0.1); color: #ff6b6b; }
+
+/* AI Specific */
+.ai-glass { background: linear-gradient(135deg, rgba(28,37,65,0.95), rgba(11,19,43,0.95)); }
+.ai-content-scroll { flex: 1; overflow-y: auto; padding: 2rem; line-height: 1.7; font-size: 1rem; }
+.ai-content-scroll h1, .ai-content-scroll h2, .ai-content-scroll h3 { margin-top: 1.5rem; margin-bottom: 0.5rem; color: #81ecec; border-bottom: 1px solid rgba(129, 236, 236, 0.2); padding-bottom: 5px; }
+.ai-content-scroll p { margin-bottom: 1rem; color: #dcdde1; }
+.ai-content-scroll strong { color: #fff; }
+.ai-content-scroll ul { padding-left: 20px; margin-bottom: 1rem; color: #dcdde1; }
+.ai-content-scroll li { margin-bottom: 5px; }
+
+.loading-spinner { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #81ecec; gap: 1rem; }
+.loading-spinner i { font-size: 2rem; }
+
+/* Float Button */
+.ai-float-btn { position: fixed; bottom: 2rem; right: 2rem; width: 64px; height: 64px; border-radius: 50%; border: none; background: var(--accent-warm); color: white; font-size: 1.5rem; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 165, 2, 0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.3s, box-shadow 0.3s; z-index: 50; }
+.ai-float-btn:hover { transform: scale(1.1) rotate(15deg); box-shadow: 0 15px 40px rgba(255, 165, 2, 0.6); }

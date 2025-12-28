@@ -1,0 +1,324 @@
+/* --- 1. Variables & Reset --- */
+:root {
+    --bg-dark: #0B132B;
+    --bg-mid: #1C2541;
+    --text-main: #ffffff;
+    --text-muted: #aab2bd;
+    
+    /* January Accent Gradient (Icy Cyan) */
+    --accent-grad: linear-gradient(135deg, #0A3D62, #38ADA9);
+    --accent-glow: rgba(56, 173, 169, 0.5);
+    
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-blur: blur(12px);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: linear-gradient(180deg, var(--bg-dark), var(--bg-mid));
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-main);
+    overflow: hidden; /* Prevent scrolling on body, allow in app */
+}
+
+/* --- 2. Main Container (Glass Card) --- */
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.todo-app {
+    width: 100%;
+    max-width: 480px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeIn 0.8s ease-out;
+}
+
+/* --- 3. Header & Stats --- */
+.header-section h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+    position: relative;
+    display: inline-block;
+}
+
+.header-section h1::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 60%;
+    height: 3px;
+    background: var(--accent-grad);
+    border-radius: 2px;
+}
+
+.stat-container {
+    background: rgba(0, 0, 0, 0.2);
+    border: var(--glass-border);
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.details {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+#progressbar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#progress {
+    width: 0%;
+    height: 100%;
+    background: var(--accent-grad);
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.stat-number p {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* --- 4. Input Area --- */
+.input-area {
+    display: flex;
+    gap: 10px;
+    position: relative;
+}
+
+#task-input {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    padding: 12px 20px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#task-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+#task-input:focus {
+    border-color: #38ADA9;
+    box-shadow: 0 0 15px rgba(56, 173, 169, 0.2);
+}
+
+#add-task-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-grad);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+#add-task-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+#add-task-btn:active {
+    transform: scale(0.95);
+}
+
+/* --- 5. Task List --- */
+.todos-container {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px; /* Space for scrollbar */
+}
+
+/* Custom Scrollbar */
+.todos-container::-webkit-scrollbar {
+    width: 5px;
+}
+.todos-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+ul {
+    list-style: none;
+}
+
+li {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    animation: slideUp 0.4s ease forwards;
+}
+
+li:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateX(5px);
+}
+
+.task-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+/* Custom Checkbox Style */
+li input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #38ADA9;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+li input[type="checkbox"]:checked {
+    background: var(--accent-grad);
+    border-color: transparent;
+}
+
+li input[type="checkbox"]:checked::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 12px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+li span {
+    font-size: 1rem;
+    font-weight: 400;
+    transition: all 0.3s;
+}
+
+/* Completed Task State */
+li.completed {
+    opacity: 0.6;
+}
+
+li.completed span {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+/* Delete Button */
+.delete-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.delete-btn:hover {
+    color: #ff6b6b;
+}
+
+/* --- 6. Empty State --- */
+.empty-state {
+    display: flex; /* Hidden by JS when tasks exist */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+    text-align: center;
+    opacity: 0.5;
+}
+
+.empty-state img {
+    height: 200px;
+    width: auto;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+/* --- 7. Animations --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
