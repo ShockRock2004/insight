@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskList = document.getElementById('task-list');
     const progress = document.getElementById('progress');
     const numbers = document.getElementById('numbers');
-    const emptyState = document.getElementById('empty-state'); // Ensure this ID exists in your HTML
+    const emptyState = document.getElementById('empty-state');
 
     // --- 1. CORE STORAGE SETUP ---
     const STORAGE_KEY = "tdl2_tasks";
@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (progress) progress.style.width = `${percent}%`;
         if (numbers) numbers.innerText = `${completed} / ${total}`;
 
-        // Toggle Empty State
         if (emptyState) {
             emptyState.style.display = total === 0 ? 'flex' : 'none';
         }
@@ -65,13 +64,35 @@ document.addEventListener('DOMContentLoaded', () => {
         taskInput.value = '';
     }
 
+    // --- CONFETTI LOGIC ---
+    function triggerConfetti() {
+        const colors = ['#38ADA9', '#0A3D62', '#ffffff'];
+        
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: colors,
+            disableForReducedMotion: true,
+            gravity: 0.8,
+            scalar: 0.9,
+            ticks: 300
+        });
+    }
+
     function toggleTask(id) {
         const task = tasks.find(t => t.id === id);
         if (task) {
             task.completed = !task.completed;
             saveData();
-            // Re-render to update checkbox visual state
-            renderAllTasks(); 
+            renderAllTasks();
+
+            // STRICT LOGIC: Only fire if completing the FINAL task
+            const allCompleted = tasks.length > 0 && tasks.every(t => t.completed);
+            
+            if (task.completed && allCompleted) {
+                triggerConfetti();
+            }
         }
     }
 
@@ -84,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 5. RENDERING ---
     function renderAllTasks() {
         taskList.innerHTML = '';
-        // Re-append empty state if needed (or handle via CSS display toggling)
         if(emptyState) taskList.appendChild(emptyState);
         
         tasks.forEach(task => renderTask(task));
@@ -95,10 +115,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const li = document.createElement('li');
         if (task.completed) li.classList.add('completed');
 
+        // Custom SVG Checkbox Structure (REQUIRED for CSS to work)
         li.innerHTML = `
             <div class="task-wrapper">
-                <input type="checkbox" ${task.completed ? 'checked' : ''}>
-                <span>${task.text}</span>
+                <label class="custom-checkbox">
+                    <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                    <span class="checkmark-bg"></span>
+                    <svg class="checkmark-svg" viewBox="0 0 24 24">
+                        <path d="M20 6L9 17L4 12"></path>
+                    </svg>
+                </label>
+                <span class="task-text">${task.text}</span>
             </div>
             <button class="delete-btn">
                 <i class="fa-solid fa-trash"></i>
@@ -109,8 +136,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkbox = li.querySelector('input');
         checkbox.addEventListener('change', () => toggleTask(task.id));
 
-        const span = li.querySelector('span');
-        span.addEventListener('click', () => {
+        const textSpan = li.querySelector('.task-text');
+        textSpan.addEventListener('click', () => {
             checkbox.checked = !checkbox.checked;
             toggleTask(task.id);
         });
@@ -122,9 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         taskList.appendChild(li);
-        
-        // Trigger simple animation
-        li.style.animation = 'slideUp 0.3s ease forwards';
     }
 
     // --- 6. BINDINGS ---

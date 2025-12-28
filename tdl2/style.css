@@ -7,6 +7,7 @@
     
     /* January Accent Gradient (Icy Cyan) */
     --accent-grad: linear-gradient(135deg, #0A3D62, #38ADA9);
+    --accent-solid: #38ADA9;
     --accent-glow: rgba(56, 173, 169, 0.5);
     
     --glass-bg: rgba(255, 255, 255, 0.03);
@@ -28,7 +29,7 @@ body {
     justify-content: center;
     align-items: center;
     color: var(--text-main);
-    overflow: hidden; /* Prevent scrolling on body, allow in app */
+    overflow: hidden;
 }
 
 /* --- 2. Main Container (Glass Card) --- */
@@ -151,7 +152,7 @@ body {
 }
 
 #task-input:focus {
-    border-color: #38ADA9;
+    border-color: var(--accent-solid);
     box-shadow: 0 0 15px rgba(56, 173, 169, 0.2);
 }
 
@@ -184,10 +185,9 @@ body {
 .todos-container {
     flex-grow: 1;
     overflow-y: auto;
-    padding-right: 5px; /* Space for scrollbar */
+    padding-right: 5px;
 }
 
-/* Custom Scrollbar */
 .todos-container::-webkit-scrollbar {
     width: 5px;
 }
@@ -204,7 +204,7 @@ li {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
     margin-bottom: 10px;
-    padding: 15px;
+    padding: 12px 15px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -226,51 +226,99 @@ li:hover {
     cursor: pointer;
 }
 
-/* Custom Checkbox Style */
-li input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 22px;
-    height: 22px;
-    border: 2px solid #38ADA9;
-    border-radius: 50%;
+/* --- PREMIUM SVG CHECKBOX STYLE (FIXED) --- */
+
+/* 1. Hide default input */
+.custom-checkbox input {
+    position: absolute;
+    opacity: 0;
     cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* 2. Container */
+.custom-checkbox {
+    display: block;
     position: relative;
-    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
 }
 
-li input[type="checkbox"]:checked {
-    background: var(--accent-grad);
-    border-color: transparent;
+/* 3. Circular Background */
+.checkmark-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 24px;
+    width: 24px;
+    background-color: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-li input[type="checkbox"]:checked::after {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    color: white;
-    font-size: 12px;
+/* 4. SVG Container */
+.checkmark-svg {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
 }
 
-li span {
+/* 5. SVG Path Animation (THE FIX) */
+.checkmark-svg path {
+    fill: none;
+    stroke: white;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    
+    /* Prepare the drawing animation */
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100; /* Hidden by default */
+    
+    transition: stroke-dashoffset 0.35s ease-in-out;
+}
+
+/* Hover State */
+.custom-checkbox:hover .checkmark-bg {
+    border-color: var(--accent-solid);
+}
+
+/* --- CHECKED STATES --- */
+
+/* 1. Background Fills & Scales */
+.custom-checkbox input:checked ~ .checkmark-bg {
+    background: var(--accent-grad);
+    border-color: transparent;
+    box-shadow: 0 0 10px var(--accent-glow);
+    animation: bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 2. Path Draws Itself */
+.custom-checkbox input:checked ~ .checkmark-svg path {
+    stroke-dashoffset: 0; /* Fully visible */
+    transition-delay: 0.1s; /* Slight delay to follow background */
+}
+
+/* Task Text */
+li span.task-text {
     font-size: 1rem;
     font-weight: 400;
     transition: all 0.3s;
+    color: var(--text-main);
 }
 
-/* Completed Task State */
-li.completed {
-    opacity: 0.6;
-}
-
-li.completed span {
+li.completed span.task-text {
     text-decoration: line-through;
     color: var(--text-muted);
+    opacity: 0.7;
 }
 
 /* Delete Button */
@@ -290,7 +338,7 @@ li.completed span {
 
 /* --- 6. Empty State --- */
 .empty-state {
-    display: flex; /* Hidden by JS when tasks exist */
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -321,4 +369,10 @@ li.completed span {
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.9); }
+    100% { transform: scale(1); }
 }
