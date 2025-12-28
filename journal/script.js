@@ -4,11 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 class JournalApp {
     constructor() {
-        this.entries = JSON.parse(localStorage.getItem("entries")) || [];
+        // --- 1. CORE STORAGE SETUP ---
+        this.STORAGE_KEY = "journal_entries";
+        
+        // Load data immediately
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        this.entries = stored ? JSON.parse(stored) : [];
+        
         this.viewState = { type: 'home', year: null, month: null };
         this.currentEditingDate = null;
         
-        // POINT TO LOCAL BACKEND
+        // Gemini Config (Preserved)
         this.backendUrl = "http://localhost:3000/analyze";
 
         this.init();
@@ -18,6 +24,12 @@ class JournalApp {
         this.cacheDOM();
         this.bindEvents();
         this.render();
+    }
+
+    // --- 2. DATA PERSISTENCE HELPER ---
+    saveToStorage() {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.entries));
+        console.log("Journal Saved."); // Debug confirmation
     }
 
     cacheDOM() {
@@ -56,12 +68,10 @@ class JournalApp {
     }
 
     bindEvents() {
-        // Hero Date Picker Logic
+        // Date Picker
         if (this.dom.hero.card && this.dom.hero.picker) {
             this.dom.hero.card.addEventListener('click', (e) => {
                 if (e.target === this.dom.hero.picker) return;
-                
-                // Robust picker trigger
                 if ('showPicker' in HTMLInputElement.prototype) {
                     this.dom.hero.picker.showPicker();
                 } else {
@@ -87,14 +97,17 @@ class JournalApp {
         this.dom.editor.saveBtn.addEventListener('click', () => this.saveEntry());
         this.dom.editor.deleteBtn.addEventListener('click', () => this.deleteCurrentEntry());
 
+        // --- AUTOSAVE IMPLEMENTATION ---
+        // Save whenever the user types
+        this.dom.editor.textarea.addEventListener('input', () => {
+            if(this.currentEditingDate) {
+                this.updateEntryData(this.currentEditingDate, this.dom.editor.textarea.value);
+            }
+        });
+
         // AI Controls
         this.dom.ai.btn.addEventListener('click', () => this.triggerAI());
         this.dom.ai.closeBtn.addEventListener('click', () => this.dom.ai.modal.classList.remove('open'));
-    }
-
-    // --- Data Helpers ---
-    saveToStorage() {
-        localStorage.setItem("entries", JSON.stringify(this.entries));
     }
 
     getEntry(date) {
@@ -106,7 +119,6 @@ class JournalApp {
         return date.toLocaleString('default', { month: 'long' });
     }
 
-    // --- Navigation Logic ---
     navigateBack() {
         if (this.viewState.type === 'days') {
             this.setView('months', this.viewState.year);
@@ -160,7 +172,7 @@ class JournalApp {
                 e.stopPropagation();
                 if(confirm(`Delete all entries from ${year}?`)) {
                     this.entries = this.entries.filter(ent => !ent.date.startsWith(year));
-                    this.saveToStorage();
+                    this.saveToStorage(); // PERSIST DELETE
                     this.renderYears();
                 }
             });
@@ -194,7 +206,7 @@ class JournalApp {
                 if(confirm(`Delete ${this.getMonthName(monthIdx)} ${year}?`)) {
                     const prefix = `${year}-${String(monthIdx+1).padStart(2,'0')}`;
                     this.entries = this.entries.filter(ent => !ent.date.startsWith(prefix));
-                    this.saveToStorage();
+                    this.saveToStorage(); // PERSIST DELETE
                     this.renderMonths(year);
                 }
             });
@@ -227,7 +239,7 @@ class JournalApp {
                 e.stopPropagation();
                 if(confirm('Delete this entry?')) {
                     this.entries = this.entries.filter(e => e.date !== entry.date);
-                    this.saveToStorage();
+                    this.saveToStorage(); // PERSIST DELETE
                     this.renderDays(year, month);
                 }
             });
@@ -248,33 +260,37 @@ class JournalApp {
     }
 
     closeEditor() {
+        // Final save on close to be safe
         if(this.currentEditingDate && this.dom.editor.textarea.value.trim() !== "") {
-            this.saveEntry();
+            this.updateEntryData(this.currentEditingDate, this.dom.editor.textarea.value);
         }
         this.dom.editor.modal.classList.remove('open');
         this.currentEditingDate = null;
+        
+        // Refresh Current View
+        if(this.viewState.type === 'home') this.renderYears();
+        else if(this.viewState.type === 'months') this.renderMonths(this.viewState.year);
+        else if(this.viewState.type === 'days') this.renderDays(this.viewState.year, this.viewState.month);
     }
 
-    saveEntry() {
-        const content = this.dom.editor.textarea.value.trim();
-        if(!content) return;
-
-        const existingIdx = this.entries.findIndex(e => e.date === this.currentEditingDate);
+    // Helper to update state and storage without closing modal
+    updateEntryData(date, content) {
+        const existingIdx = this.entries.findIndex(e => e.date === date);
         if(existingIdx > -1) {
             this.entries[existingIdx].content = content;
         } else {
-            this.entries.push({ date: this.currentEditingDate, content, id: Date.now() });
+            this.entries.push({ date: date, content: content, id: Date.now() });
         }
-
         this.saveToStorage();
-        if(document.activeElement === this.dom.editor.saveBtn) {
-            this.dom.editor.modal.classList.remove('open');
-        }
+    }
 
-        // Refresh views
-        if(this.viewState.type === 'home') this.renderYears();
-        if(this.viewState.type === 'days') this.renderDays(this.viewState.year, this.viewState.month);
-        if(this.viewState.type === 'months') this.renderMonths(this.viewState.year);
+    // Button click handler
+    saveEntry() {
+        const content = this.dom.editor.textarea.value.trim();
+        if(content) {
+            this.updateEntryData(this.currentEditingDate, content);
+            this.closeEditor();
+        }
     }
 
     deleteCurrentEntry() {
@@ -286,7 +302,7 @@ class JournalApp {
         }
     }
 
-    // --- AI Integration (Correct Client-Side Implementation) ---
+    // --- AI Integration ---
     async triggerAI() {
         this.dom.ai.modal.classList.add('open');
         this.dom.ai.content.innerHTML = `
@@ -301,15 +317,13 @@ class JournalApp {
             return;
         }
 
-        // 1. Prepare Data
         const sortedEntries = [...this.entries].sort((a,b) => a.date.localeCompare(b.date));
-        let promptText = "Analyze the following journal entries chronologically. Identify personality traits, growth patterns, emotional trends, strengths, weaknesses, and actionable improvement suggestions. Return the result in Markdown format.\n\nDATA:\n";
+        let promptText = "Analyze the following journal entries chronologically. Return result in Markdown.\n\nDATA:\n";
         
         sortedEntries.forEach(e => {
             promptText += `[Date: ${e.date}] Content: ${e.content}\n`;
         });
 
-        // 2. Call Local Backend
         try {
             const response = await fetch(this.backendUrl, {
                 method: 'POST',
@@ -317,36 +331,18 @@ class JournalApp {
                 body: JSON.stringify({ journals: promptText })
             });
 
-            if (!response.ok) {
-                // Try to parse the error message from the backend
-                const errData = await response.json();
-                throw new Error(errData.error || "Backend server error");
-            }
-
+            if (!response.ok) throw new Error("Backend server unavailable");
             const data = await response.json();
             
-            // 3. Render Result
             if(data.result) {
                 this.dom.ai.content.innerHTML = marked.parse(data.result);
             } else {
-                throw new Error("Invalid response format from server");
+                throw new Error("Invalid response");
             }
 
         } catch (error) {
             console.error(error);
-            this.dom.ai.content.innerHTML = `
-                <div style="text-align:center; padding: 2rem;">
-                    <i class="fa-solid fa-server" style="font-size: 3rem; color: #ff6b6b; margin-bottom: 1rem;"></i>
-                    <h3 style="color: #ff6b6b; margin-bottom: 0.5rem;">Connection Failed</h3>
-                    <p style="color: var(--text-muted);">Could not analyze journals.</p>
-                    <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.7;">
-                        Error: ${error.message}
-                    </p>
-                    <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.7;">
-                        Make sure <code>node server.js</code> is running.
-                    </p>
-                </div>
-            `;
+            this.dom.ai.content.innerHTML = `<p style="color:#ff6b6b">Error: ${error.message}</p>`;
         }
     }
 }

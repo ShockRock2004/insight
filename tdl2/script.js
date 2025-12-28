@@ -1,113 +1,135 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
     const taskInput = document.getElementById('task-input');
     const addTaskBtn = document.getElementById('add-task-btn');
     const taskList = document.getElementById('task-list');
     const progress = document.getElementById('progress');
     const numbers = document.getElementById('numbers');
-    const emptyState = document.getElementById('empty-state');
+    const emptyState = document.getElementById('empty-state'); // Ensure this ID exists in your HTML
 
+    // --- 1. CORE STORAGE SETUP ---
+    const STORAGE_KEY = "tdl2_tasks";
     let tasks = [];
 
-    // Load tasks from local storage on startup (Optional, keeps data persistent)
-    // const storedTasks = JSON.parse(localStorage.getItem('tasks'));
-    // if(storedTasks) { tasks = storedTasks; updateUI(); }
+    // --- 2. INITIALIZATION ---
+    function init() {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            try {
+                tasks = JSON.parse(stored);
+            } catch (e) {
+                console.error("Data corruption detected, resetting tasks", e);
+                tasks = [];
+            }
+        }
+        renderAllTasks();
+        updateStats();
+    }
 
-    const updateStats = () => {
-        const completedTasks = tasks.filter(task => task.completed).length;
-        const totalTasks = tasks.length;
-        const percentage = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
+    // --- 3. PERSISTENCE HELPER ---
+    function saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        updateStats();
+    }
 
-        progress.style.width = `${percentage}%`;
-        numbers.innerText = `${completedTasks}/${totalTasks}`;
+    // --- 4. CORE LOGIC ---
+    function updateStats() {
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        const percent = total === 0 ? 0 : (completed / total) * 100;
+
+        if (progress) progress.style.width = `${percent}%`;
+        if (numbers) numbers.innerText = `${completed} / ${total}`;
 
         // Toggle Empty State
-        if (totalTasks === 0) {
-            emptyState.style.display = 'flex';
-        } else {
-            emptyState.style.display = 'none';
+        if (emptyState) {
+            emptyState.style.display = total === 0 ? 'flex' : 'none';
         }
+    }
 
-        if (completedTasks === totalTasks && totalTasks > 0) {
-            triggerConfetti();
-        }
-    };
-
-    const addTask = (e) => {
+    function addTask(e) {
         e.preventDefault();
         const text = taskInput.value.trim();
-        if (text) {
-            tasks.push({ text: text, completed: false });
-            taskInput.value = '';
-            renderTasks();
-            updateStats();
-        }
-    };
+        if (!text) return;
 
-    const toggleTask = (index) => {
-        tasks[index].completed = !tasks[index].completed;
-        renderTasks();
-        updateStats();
-    };
+        const newTask = {
+            id: Date.now(),
+            text: text,
+            completed: false
+        };
 
-    const deleteTask = (index) => {
-        tasks.splice(index, 1);
-        renderTasks();
-        updateStats();
-    };
-
-    const renderTasks = () => {
-        taskList.innerHTML = '';
+        tasks.push(newTask);
+        saveData();
+        renderTask(newTask);
         
-        // Re-append empty state (hidden or shown based on CSS/Stats)
-        taskList.appendChild(emptyState);
+        taskInput.value = '';
+    }
 
-        tasks.forEach((task, index) => {
-            const li = document.createElement('li');
-            if (task.completed) li.classList.add('completed');
+    function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            saveData();
+            // Re-render to update checkbox visual state
+            renderAllTasks(); 
+        }
+    }
 
-            li.innerHTML = `
-                <div class="task-wrapper" onclick="toggleTask(${index})">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''}>
-                    <span>${task.text}</span>
-                </div>
-                <button class="delete-btn" onclick="deleteTask(${index})">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            `;
-            
-            // Attach event listeners dynamically to avoid inline HTML onclick issues
-            const checkboxDiv = li.querySelector('.task-wrapper');
-            checkboxDiv.addEventListener('click', (e) => {
-                // Prevent double triggering if clicking directly on checkbox input
-                if(e.target.tagName !== 'INPUT') {
-                    toggleTask(index);
-                }
-            });
-            
-            const checkboxInput = li.querySelector('input');
-            checkboxInput.addEventListener('change', () => toggleTask(index));
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveData();
+        renderAllTasks();
+    }
 
-            const delBtn = li.querySelector('.delete-btn');
-            delBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent toggling when deleting
-                deleteTask(index);
-            });
+    // --- 5. RENDERING ---
+    function renderAllTasks() {
+        taskList.innerHTML = '';
+        // Re-append empty state if needed (or handle via CSS display toggling)
+        if(emptyState) taskList.appendChild(emptyState);
+        
+        tasks.forEach(task => renderTask(task));
+        updateStats();
+    }
 
-            taskList.appendChild(li);
+    function renderTask(task) {
+        const li = document.createElement('li');
+        if (task.completed) li.classList.add('completed');
+
+        li.innerHTML = `
+            <div class="task-wrapper">
+                <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                <span>${task.text}</span>
+            </div>
+            <button class="delete-btn">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        `;
+
+        // Event Listeners
+        const checkbox = li.querySelector('input');
+        checkbox.addEventListener('change', () => toggleTask(task.id));
+
+        const span = li.querySelector('span');
+        span.addEventListener('click', () => {
+            checkbox.checked = !checkbox.checked;
+            toggleTask(task.id);
         });
-    };
 
-    const triggerConfetti = () => {
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#38ADA9', '#0A3D62', '#ffffff'] // January Theme Colors
+        const deleteBtn = li.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteTask(task.id);
         });
-    };
 
-    addTaskBtn.addEventListener('click', addTask);
+        taskList.appendChild(li);
+        
+        // Trigger simple animation
+        li.style.animation = 'slideUp 0.3s ease forwards';
+    }
+
+    // --- 6. BINDINGS ---
+    if(addTaskBtn) addTaskBtn.addEventListener('click', addTask);
     
-    // Initial Render
-    updateStats();
+    // Start App
+    init();
 });
