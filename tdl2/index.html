@@ -16,36 +16,78 @@
 
     <body>
         <div class="container">
-            <div class="todo-app">
-               <div class="header-section">
-                   <h1>To-Do List</h1>
-                   <div class="stat-container">
-                        <div class="details">
-                            <span class="stat-label">Progress</span>
-                            <div id="progressbar">
-                                <div id="progress"></div>
-                            </div>
-                        </div>
-                        <div class="stat-number">
-                            <p id="numbers">0/0</p>
-                        </div>
+            <div id="app-container" class="todo-app">
+               
+               <div id="home-view" class="view-section">
+                   <div class="home-header">
+                       <div class="title-group">
+                           <h1 class="hero-title">To-Do List</h1>
+                           <div class="title-line"></div>
+                       </div>
+                       
+                       <button id="add-list-btn" class="glass-btn">
+                           <i class="fa-solid fa-plus"></i>
+                           <span>Add</span>
+                       </button>
                    </div>
+                   
+                   <div id="lists-grid" class="cards-grid">
+                        </div>
                </div>
 
-               <form class="input-area">
-                    <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
-                    <button type="submit" id="add-task-btn">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-               </form>
+               <div id="list-view" class="view-section hidden">
+                   <div class="header-section">
+                       <div class="nav-row">
+                           <button id="back-home-btn" class="icon-btn back-btn">
+                               <i class="fa-solid fa-arrow-left"></i>
+                           </button>
+                           <h1 id="list-title" title="Click to rename">To-Do List</h1>
+                           <button id="delete-list-btn" class="icon-btn delete-list-btn" title="Delete this list">
+                               <i class="fa-regular fa-trash-can"></i>
+                           </button>
+                       </div>
 
-                <div class="todos-container">
-                    <ul id="task-list">
-                        <div class="empty-state" id="empty-state">
-                            <img src="Media/Images/EmptyState.png" alt="No tasks" onerror="this.style.display='none'">
-                            <p>No tasks yet. Stay focused.</p>
-                        </div>
-                    </ul>
+                       <div class="stat-container">
+                            <div class="details">
+                                <span class="stat-label">Progress</span>
+                                <div id="progressbar">
+                                    <div id="progress"></div>
+                                </div>
+                            </div>
+                            <div class="stat-number">
+                                <p id="numbers">0/0</p>
+                            </div>
+                       </div>
+                   </div>
+
+                   <form class="input-area">
+                        <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
+                        <button type="submit" id="add-task-btn">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                   </form>
+
+                    <div class="todos-container">
+                        <ul id="task-list">
+                            <div class="empty-state" id="empty-state">
+                                <img src="Media/Images/EmptyState.png" alt="No tasks" onerror="this.style.display='none'">
+                                <p>No tasks yet. Stay focused.</p>
+                            </div>
+                        </ul>
+                    </div>
+               </div>
+            </div>
+        </div>
+
+        <div id="modal-overlay" class="modal-overlay hidden">
+            <div class="modal-window">
+                <h2 id="modal-title">Title</h2>
+                <div id="modal-content">
+                    <input type="text" id="modal-input" class="modal-input" placeholder="..." autocomplete="off">
+                </div>
+                <div class="modal-actions">
+                    <button id="modal-cancel-btn" class="btn-secondary">Cancel</button>
+                    <button id="modal-confirm-btn" class="btn-primary">Confirm</button>
                 </div>
             </div>
         </div>

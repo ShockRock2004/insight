@@ -44,7 +44,7 @@ body {
 
 .todo-app {
     width: 100%;
-    max-width: 480px;
+    max-width: 480px; /* Default Narrow View (List Mode) */
     background: var(--glass-bg);
     backdrop-filter: var(--glass-blur);
     border: var(--glass-border);
@@ -53,31 +53,94 @@ body {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
     animation: fadeIn 0.8s ease-out;
+    height: 85vh;
+    position: relative;
+    transition: all 0.4s ease;
+}
+
+/* --- Homescreen Mode Layout --- */
+.todo-app.home-mode {
+    /* WIDE LAYOUT for Grid Distribution */
+    max-width: 1200px; 
+    width: 95%;
+    
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 1rem 0;
+}
+
+/* View Section Wrapper */
+.view-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.hidden {
+    display: none !important;
 }
 
 /* --- 3. Header & Stats --- */
 .header-section h1 {
     font-size: 1.8rem;
     font-weight: 800;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     letter-spacing: -0.5px;
     position: relative;
     display: inline-block;
+    cursor: pointer;
+    transition: opacity 0.2s;
 }
 
-.header-section h1::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    width: 60%;
-    height: 3px;
-    background: var(--accent-grad);
-    border-radius: 2px;
+.header-section h1:hover {
+    opacity: 0.8;
 }
 
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.nav-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 1rem;
+}
+
+/* Icon Buttons */
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.delete-list-btn:hover {
+    color: #ff6b6b;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+/* Stats */
 .stat-container {
     background: rgba(0, 0, 0, 0.2);
     border: var(--glass-border);
@@ -128,7 +191,7 @@ body {
     color: var(--text-main);
 }
 
-/* --- 4. Input Area --- */
+/* --- 4. Input Area (Tasks) --- */
 .input-area {
     display: flex;
     gap: 10px;
@@ -181,11 +244,12 @@ body {
     transform: scale(0.95);
 }
 
-/* --- 5. Task List --- */
+/* --- 5. Task List Container --- */
 .todos-container {
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 5px;
+    min-height: 0;
 }
 
 .todos-container::-webkit-scrollbar {
@@ -200,6 +264,7 @@ ul {
     list-style: none;
 }
 
+/* Task List Items (LI) */
 li {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -218,6 +283,266 @@ li:hover {
     transform: translateX(5px);
 }
 
+/* --- 6. HOMESCREEN SPECIFIC STYLES (GRID FIX) --- */
+
+.home-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding-left: 5px;
+}
+
+.title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    background: linear-gradient(to right, #ffffff, #dcdcdc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: left;
+}
+
+.title-line {
+    width: 80px;
+    height: 4px;
+    background: var(--accent-grad);
+    border-radius: 4px;
+}
+
+.glass-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.glass-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+/* --- CRITICAL GRID LAYOUT FIX --- */
+.cards-grid {
+    display: grid;
+    /* Strict Column Definition: Auto-fill ensures items wrap. Minmax ensures they don't shrink too small */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    /* Explicit Gap */
+    gap: 24px;
+    /* Padding handles hover overflow buffer */
+    padding: 24px 8px;
+    
+    /* Layout Flow Properties */
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: auto;
+    
+    /* Alignment Rules */
+    align-content: start; /* Prevents vertical stretching of grid tracks */
+    justify-content: start; /* Aligns items to the left/start */
+}
+
+.cards-grid::-webkit-scrollbar {
+    width: 5px;
+}
+.cards-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.dashboard-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    /* Dimensions */
+    width: 100%;
+    height: 100%; /* Fills the grid cell height */
+    aspect-ratio: 1.5 / 1; 
+    
+    position: relative;
+    /* overflow: visible;  Allowed for shadow/hover effects, grid handles layout clipping */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); 
+    
+    /* Stacking Context */
+    z-index: 1;
+}
+
+.dashboard-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-solid);
+    z-index: 10; /* Lifts above siblings */
+}
+
+.card-top {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.card-icon-small {
+    font-size: 1.2rem;
+    color: var(--accent-solid);
+    filter: drop-shadow(0 0 8px var(--accent-glow));
+}
+
+.card-title-home {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+/* Mini Progress Bar */
+.mini-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: auto; 
+}
+
+.mini-progress-fill {
+    height: 100%;
+    background: var(--accent-grad);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+/* --- CUSTOM MODAL --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-window {
+    background: linear-gradient(135deg, #1C2541, #0B132B);
+    border: var(--glass-border);
+    border-radius: 24px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modal-overlay.active .modal-window {
+    transform: scale(1);
+}
+
+.modal-window h2 {
+    font-size: 1.4rem;
+    color: var(--text-main);
+}
+
+.modal-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 15px;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.modal-input:focus {
+    border-color: var(--accent-solid);
+    box-shadow: 0 0 15px rgba(56, 173, 169, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.btn-primary {
+    background: var(--accent-grad);
+    color: white;
+    box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.15);
+    color: white;
+}
+
+/* --- Checkbox & Utils --- */
 .task-wrapper {
     display: flex;
     align-items: center;
@@ -226,9 +551,6 @@ li:hover {
     cursor: pointer;
 }
 
-/* --- PREMIUM SVG CHECKBOX STYLE (FIXED) --- */
-
-/* 1. Hide default input */
 .custom-checkbox input {
     position: absolute;
     opacity: 0;
@@ -237,7 +559,6 @@ li:hover {
     width: 0;
 }
 
-/* 2. Container */
 .custom-checkbox {
     display: block;
     position: relative;
@@ -247,7 +568,6 @@ li:hover {
     flex-shrink: 0;
 }
 
-/* 3. Circular Background */
 .checkmark-bg {
     position: absolute;
     top: 0;
@@ -260,7 +580,6 @@ li:hover {
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
 
-/* 4. SVG Container */
 .checkmark-svg {
     position: absolute;
     top: 50%;
@@ -271,29 +590,21 @@ li:hover {
     pointer-events: none;
 }
 
-/* 5. SVG Path Animation (THE FIX) */
 .checkmark-svg path {
     fill: none;
     stroke: white;
     stroke-width: 3;
     stroke-linecap: round;
     stroke-linejoin: round;
-    
-    /* Prepare the drawing animation */
     stroke-dasharray: 100;
-    stroke-dashoffset: 100; /* Hidden by default */
-    
+    stroke-dashoffset: 100;
     transition: stroke-dashoffset 0.35s ease-in-out;
 }
 
-/* Hover State */
 .custom-checkbox:hover .checkmark-bg {
     border-color: var(--accent-solid);
 }
 
-/* --- CHECKED STATES --- */
-
-/* 1. Background Fills & Scales */
 .custom-checkbox input:checked ~ .checkmark-bg {
     background: var(--accent-grad);
     border-color: transparent;
@@ -301,18 +612,17 @@ li:hover {
     animation: bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 2. Path Draws Itself */
 .custom-checkbox input:checked ~ .checkmark-svg path {
-    stroke-dashoffset: 0; /* Fully visible */
-    transition-delay: 0.1s; /* Slight delay to follow background */
+    stroke-dashoffset: 0;
+    transition-delay: 0.1s;
 }
 
-/* Task Text */
 li span.task-text {
     font-size: 1rem;
     font-weight: 400;
     transition: all 0.3s;
     color: var(--text-main);
+    word-break: break-word;
 }
 
 li.completed span.task-text {
@@ -321,7 +631,6 @@ li.completed span.task-text {
     opacity: 0.7;
 }
 
-/* Delete Button */
 .delete-btn {
     background: transparent;
     border: none;
@@ -336,7 +645,6 @@ li.completed span.task-text {
     color: #ff6b6b;
 }
 
-/* --- 6. Empty State --- */
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -360,7 +668,6 @@ li.completed span.task-text {
     letter-spacing: 0.5px;
 }
 
-/* --- 7. Animations --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
@@ -375,4 +682,42 @@ li.completed span.task-text {
     0% { transform: scale(1); }
     50% { transform: scale(0.9); }
     100% { transform: scale(1); }
+}
+
+/* --- MOBILE LAYOUT OVERRIDES --- */
+@media (max-width: 768px) {
+    .container {
+        height: 100svh;
+        padding: 10px;
+        align-items: flex-start;
+    }
+
+    .todo-app {
+        height: 100%;
+        max-height: 100%;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .todo-app.home-mode {
+        width: 100%;
+        padding: 10px 0;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+    }
+
+    /* Force single column on mobile */
+    .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 20px 10px 60px 10px;
+    }
+
+    /* Unset desktop aspect ratio, use natural height */
+    .dashboard-card {
+        aspect-ratio: auto;
+        min-height: 120px;
+    }
 }
